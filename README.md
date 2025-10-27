@@ -1,6 +1,6 @@
-# Personal Digital Diary
+# Google Drive Clone
 
-A secure, private web application that creates a beautiful frontend interface for your Google Drive photos and videos. Built with Next.js, TypeScript, and Supabase for maximum security and performance.
+A secure, private web application that creates a frontend interface for Google Drive photos and videos. Built with Next.js, TypeScript, and Supabase.
 
 ## 🌟 Features
 
@@ -269,3 +269,4 @@ This project is private and proprietary. All rights reserved.
 ---
 
 **Built with ❤️ for secure, private memory keeping.**
+** ChatGPT Generated ReadMe may contain errors **
