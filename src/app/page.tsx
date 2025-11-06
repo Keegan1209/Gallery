@@ -88,7 +88,7 @@ export default function Dashboard() {
       const data = await response.json()
 
       if (data.success) {
-        console.log('📁 Loaded folders:', data.folders.map(f => ({
+        console.log('📁 Loaded folders:', data.folders.map((f: Folder) => ({
           name: f.name,
           coverImage: f.coverImage ? 'HAS_COVER' : 'NO_COVER',
           coverImagePreview: f.coverImage ? f.coverImage.substring(0, 50) + '...' : null
@@ -295,12 +295,12 @@ export default function Dashboard() {
       if (data.success) {
         setEditCoverImage(data.coverUrl)
         setCoverPreview(data.coverUrl)
-        
+
         console.log('Cover URL set:', data.coverUrl.substring(0, 50) + '...')
-        
-        // Automatically save the folder with the new cover image
+
+        // Automatically save the folder with the new cover image using the same method as URL
         await updateFolderWithCover(data.coverUrl)
-        
+
         setMessage('✅ Cover image uploaded and saved successfully')
       } else {
         console.error('Upload failed:', data)
@@ -431,7 +431,7 @@ export default function Dashboard() {
               margin: '5px 0 0 0',
               lineHeight: '1.3'
             }}>
-             {/* EDIT: Change third line here */}
+            {/* EDIT: Change third line here */}
           </div>
         </div>
 
@@ -515,7 +515,7 @@ export default function Dashboard() {
           margin: 0,
           letterSpacing: '2px' // EDIT: Letter spacing for clean look
         }}>
-          COLLECTIONS 
+          COLLECTIONS
           {/* EDIT: Change center section title here */}
         </h2>
       </div>
@@ -610,7 +610,7 @@ export default function Dashboard() {
                       setEditingFolder(folder)
                       setEditDisplayName(folder.name)
                       setEditDescription(folder.description || '')
-                      
+
                       // Load existing cover image
                       try {
                         const coverResponse = await fetch(`/api/folders/${folder.id}/cover`)
@@ -627,10 +627,10 @@ export default function Dashboard() {
                         setEditCoverImage(folder.coverImage || '')
                         setCoverPreview(folder.coverImage || null)
                       }
-                      
+
                       // Reset upload states
                       setCoverFile(null)
-                      
+
                       setShowEditModal(true)
                     }}
                     style={{
@@ -1085,7 +1085,7 @@ export default function Dashboard() {
                   </label>
 
                   {/* FILE UPLOAD INPUT */}
-                  <div style={{ marginBottom: '10px' }}>
+                  <div style={{ marginBottom: '15px' }}>
                     <input
                       type="file"
                       accept="image/*"
@@ -1109,17 +1109,59 @@ export default function Dashboard() {
                     </div>
                   </div>
 
-                  {/* UPLOAD BUTTON */}
+                  {/* IMAGE PREVIEW */}
+                  {(coverPreview || editCoverImage) && (
+                    <div style={{
+                      border: '1px solid #cccccc',
+                      padding: '15px',
+                      textAlign: 'center',
+                      marginBottom: '15px',
+                      backgroundColor: '#fafafa'
+                    }}>
+                      <div style={{ fontSize: '11px', color: '#666666', marginBottom: '10px' }}>
+                        CURRENT COVER IMAGE:
+                      </div>
+                      <img
+                        src={coverPreview || editCoverImage}
+                        alt="Cover preview"
+                        style={{
+                          maxWidth: '100%',
+                          maxHeight: '150px',
+                          objectFit: 'cover',
+                          border: '1px solid #cccccc',
+                          marginBottom: '10px'
+                        }}
+                      />
+                      <div>
+                        <button
+                          onClick={removeCoverImage}
+                          style={{
+                            backgroundColor: '#cc0000',
+                            color: '#ffffff',
+                            border: '1px solid #cc0000',
+                            padding: '6px 12px',
+                            fontSize: '11px',
+                            cursor: 'pointer',
+                            letterSpacing: '0.5px'
+                          }}
+                        >
+                          REMOVE IMAGE
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* UPLOAD BUTTON - Below preview */}
                   {coverFile && (
-                    <div style={{ marginBottom: '10px' }}>
+                    <div style={{ marginBottom: '15px', textAlign: 'center' }}>
                       <button
                         onClick={uploadCoverImage}
                         disabled={uploadingCover}
                         style={{
-                          backgroundColor: uploadingCover ? '#cccccc' : '#000000',
-                          color: uploadingCover ? '#666666' : '#ffffff',
-                          border: '1px solid #000000',
-                          padding: '8px 16px',
+                          backgroundColor: uploadingCover ? '#cccccc' : '#28a745',
+                          color: '#ffffff',
+                          border: `1px solid ${uploadingCover ? '#cccccc' : '#28a745'}`,
+                          padding: '10px 20px',
                           fontSize: '12px',
                           fontWeight: 'bold',
                           cursor: uploadingCover ? 'not-allowed' : 'pointer',
@@ -1127,7 +1169,7 @@ export default function Dashboard() {
                           marginRight: '10px'
                         }}
                       >
-                        {uploadingCover ? 'UPLOADING...' : 'UPLOAD IMAGE'}
+                        {uploadingCover ? 'UPLOADING...' : '✓ UPLOAD IMAGE'}
                       </button>
                       <button
                         onClick={() => {
@@ -1138,7 +1180,7 @@ export default function Dashboard() {
                           backgroundColor: 'transparent',
                           color: '#666666',
                           border: '1px solid #cccccc',
-                          padding: '8px 16px',
+                          padding: '10px 20px',
                           fontSize: '12px',
                           cursor: 'pointer',
                           letterSpacing: '0.5px'
@@ -1146,46 +1188,6 @@ export default function Dashboard() {
                       >
                         CANCEL
                       </button>
-                    </div>
-                  )}
-
-                  {/* IMAGE PREVIEW */}
-                  {(coverPreview || editCoverImage) && (
-                    <div style={{
-                      border: '1px solid #cccccc',
-                      padding: '10px',
-                      textAlign: 'center',
-                      marginBottom: '10px'
-                    }}>
-                      <div style={{ fontSize: '11px', color: '#666666', marginBottom: '8px' }}>
-                        CURRENT COVER IMAGE:
-                      </div>
-                      <img
-                        src={coverPreview || editCoverImage}
-                        alt="Cover preview"
-                        style={{
-                          maxWidth: '100%',
-                          maxHeight: '120px',
-                          objectFit: 'cover',
-                          border: '1px solid #cccccc'
-                        }}
-                      />
-                      <div style={{ marginTop: '8px' }}>
-                        <button
-                          onClick={removeCoverImage}
-                          style={{
-                            backgroundColor: '#cc0000',
-                            color: '#ffffff',
-                            border: '1px solid #cc0000',
-                            padding: '4px 8px',
-                            fontSize: '11px',
-                            cursor: 'pointer',
-                            letterSpacing: '0.5px'
-                          }}
-                        >
-                          REMOVE IMAGE
-                        </button>
-                      </div>
                     </div>
                   )}
 

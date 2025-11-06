@@ -293,25 +293,28 @@ export default function FolderPhotosPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Navigation */}
-      <nav className="bg-white shadow">
+      <nav className="bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center h-16">
             <button
               onClick={() => router.back()}
-              className="flex items-center text-gray-600 hover:text-gray-900 mr-4"
+              className="flex items-center text-gray-500 hover:text-gray-900 transition-colors text-sm font-normal"
+              style={{
+                background: 'none',
+                border: 'none',
+                padding: 0,
+                fontFamily: 'Helvetica, Arial, sans-serif',
+                letterSpacing: '0.5px'
+              }}
             >
-              <ArrowLeft className="h-5 w-5 mr-2" />
-              Back
+              ← Back
             </button>
-            <h1 className="text-xl font-semibold text-gray-900">
-              Photo Gallery
-            </h1>
           </div>
         </div>
       </nav>
 
       {/* Diary Entry Section */}
-      <section className="bg-white border-b border-gray-200" style={{ height: '40vh' }}>
+      <section className="bg-white" style={{ height: '40vh' }}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full">
           <div className="flex h-full">
             {/* Left Column - Folder Name (30%) */}
@@ -366,7 +369,7 @@ export default function FolderPhotosPage() {
       </section>
 
       {/* Photo Grid */}
-      <main className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+      <main className="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
         {photos.length === 0 ? (
           <div className="text-center py-16">
             <div className="w-32 h-32 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
@@ -377,7 +380,7 @@ export default function FolderPhotosPage() {
           </div>
         ) : (
           <>
-            <div className="grid grid-cols-5 gap-4">
+            <div className="grid grid-cols-5 gap-4" style={{ marginTop: '30px' }}>
               {photos.map((photo, index) => (
                 <LazyImage
                   key={photo.id}
@@ -388,7 +391,7 @@ export default function FolderPhotosPage() {
                   onError={(e) => {
                     // Log the error for debugging
                     console.log(`❌ Image failed to load: ${photo.thumbnailUrl}`)
-                    
+
                     // Try the full URL as fallback
                     const target = e.target as HTMLImageElement
                     if (target.src === photo.thumbnailUrl) {
