@@ -2,15 +2,23 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { SignJWT } from 'jose'
 
+// Initialize Supabase client for authentication
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 )
 
+/**
+ * Login API Route
+ * 
+ * Handles user authentication using Supabase Auth.
+ * Creates a JWT session token and sets it as an HTTP-only cookie.
+ */
 export async function POST(request: NextRequest) {
     try {
         const { email, password } = await request.json()
 
+        // Validate required fields
         if (!email || !password) {
             return NextResponse.json(
                 { success: false, error: 'Email and password are required' },
@@ -18,7 +26,7 @@ export async function POST(request: NextRequest) {
             )
         }
 
-        // Authenticate with Supabase
+        // Authenticate user with Supabase Auth
         const { data, error } = await supabase.auth.signInWithPassword({
             email,
             password,
@@ -31,7 +39,7 @@ export async function POST(request: NextRequest) {
             )
         }
 
-        // Create JWT token for our app
+        // Create JWT session token for our application
         const sessionSecret = process.env.SESSION_SECRET || "03df54b0b8cdb05b14bdfb75b18609ca89f3df0320985da126477f000b113a31"
         const secret = new TextEncoder().encode(sessionSecret)
         const token = await new SignJWT({ 
@@ -44,7 +52,7 @@ export async function POST(request: NextRequest) {
             .setExpirationTime('24h')
             .sign(secret)
 
-        // Create response with cookie
+        // Create successful response
         const response = NextResponse.json({ 
             success: true,
             user: {
@@ -53,11 +61,12 @@ export async function POST(request: NextRequest) {
             }
         })
         
+        // Set JWT token as HTTP-only cookie for security
         response.cookies.set('session', token, {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: 'lax',
-            maxAge: 60 * 60 * 24, // 24 hours
+            httpOnly: true, // Prevents JavaScript access (XSS protection)
+            secure: process.env.NODE_ENV === 'production', // HTTPS only in production
+            sameSite: 'lax', // CSRF protection
+            maxAge: 60 * 60 * 24, // 24 hours expiration
         })
 
         return response

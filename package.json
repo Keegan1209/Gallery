@@ -5,9 +5,14 @@
   "main": "index.js",
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "npx prisma generate && next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "db:setup": "node scripts/deploy-setup.js",
+    "db:push": "npx prisma db push",
+    "db:generate": "npx prisma generate",
+    "postbuild": "npx prisma generate",
+    "vercel-build": "npx prisma generate && npx prisma db push && next build"
   },
   "repository": {
     "type": "git",

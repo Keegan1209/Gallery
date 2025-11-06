@@ -1,8 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { jwtVerify } from 'jose'
 
+/**
+ * Authentication Middleware
+ * 
+ * This middleware runs on every request and protects all pages except login.
+ * It checks for a valid JWT session token and redirects to login if not found.
+ */
 export async function middleware(request: NextRequest) {
-  // Skip middleware for login page and API auth routes
+  // Skip authentication check for login page and auth API routes
   if (
     request.nextUrl.pathname.startsWith('/login') ||
     request.nextUrl.pathname.startsWith('/api/auth/login')
@@ -10,21 +16,23 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next()
   }
 
-  // Get session token from cookies
+  // Get the session token from HTTP-only cookies
   const token = request.cookies.get('session')?.value
 
+  // No token found - redirect to login
   if (!token) {
     return NextResponse.redirect(new URL('/login', request.url))
   }
 
   try {
-    // Verify JWT token
+    // Verify the JWT token is valid and not expired
     const secret = new TextEncoder().encode(process.env.SESSION_SECRET || 'fallback-secret')
     await jwtVerify(token, secret)
     
+    // Token is valid - allow access to the requested page
     return NextResponse.next()
   } catch (error) {
-    // Invalid token, redirect to login
+    // Token is invalid or expired - redirect to login
     return NextResponse.redirect(new URL('/login', request.url))
   }
 }

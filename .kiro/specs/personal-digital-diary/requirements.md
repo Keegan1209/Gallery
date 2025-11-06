@@ -1,102 +1,114 @@
-# Requirements Document
+# Personal Digital Diary - Google Drive Photo Gallery Requirements
 
 ## Introduction
 
-The Personal Digital Diary is a private, secure web application that allows a single user to upload, organize, and reflect on personal images and videos. The system provides a gallery-like interface for viewing media entries with associated descriptions and timestamps, creating a digital journal experience that combines visual memories with written reflections.
+This feature enables users to connect their Google Drive account to their personal digital diary application, allowing them to browse, organize, and display photos and videos from their Google Drive folders in a beautiful gallery interface. The system will use Google Drive Service Account authentication for secure server-side access to user-shared folders.
 
 ## Glossary
 
-- **Digital_Diary_System**: The complete web application including frontend, backend, database, and storage components
-- **Entry**: A single diary record containing media (image or video), optional title, description, and metadata
-- **Gallery_Grid**: The main interface component displaying all entries in a responsive grid layout
-- **Entry_Modal**: A popup interface for viewing full entry details including media and description
-- **Upload_Form**: The interface component for creating new diary entries
-- **Admin_User**: The single authenticated user who has access to the diary system
-- **Media_File**: An uploaded image or video file stored in cloud storage
-- **Authentication_Middleware**: Server-side component that validates user sessions and restricts access
+- **Personal_Diary_System**: The main web application for managing personal digital diary entries
+- **Google_Drive_Service**: The Google Drive API integration service using Service Account authentication
+- **Photo_Gallery**: The user interface component for displaying images and videos from Google Drive
+- **Folder_Browser**: The interface for selecting and managing Google Drive folders
+- **Diary_Category**: A categorized collection of media files from a specific Google Drive folder
+- **Media_Entry**: An individual photo or video file from Google Drive displayed in the diary
+- **Service_Account**: Google Cloud service account for server-side API authentication
+- **Sync_Process**: The automated process of fetching and updating media files from Google Drive
 
 ## Requirements
 
 ### Requirement 1
 
-**User Story:** As an Admin_User, I want to securely access my private diary, so that only I can view my personal content.
+**User Story:** As a diary user, I want to create photo categories that are stored as folders in Google Drive, so that I can organize my photos by different themes or events directly from my diary interface.
 
 #### Acceptance Criteria
 
-1. WHEN an unauthenticated user visits any route except /login, THE Digital_Diary_System SHALL redirect them to the login page
-2. WHEN an Admin_User enters the correct password on the login page, THE Digital_Diary_System SHALL create an authenticated session
-3. WHEN an Admin_User has an active session, THE Digital_Diary_System SHALL allow access to all diary functionality
-4. THE Digital_Diary_System SHALL hash and store the admin password securely using environment variables
-5. WHEN an Admin_User clicks logout, THE Digital_Diary_System SHALL terminate the session and redirect to login
+1. THE Personal_Diary_System SHALL provide a "Create Category" button on the main dashboard
+2. WHEN a user clicks "Create Category", THE Personal_Diary_System SHALL prompt for a category name
+3. WHEN a category name is provided, THE Personal_Diary_System SHALL create a new folder in Google Drive with that name
+4. THE Personal_Diary_System SHALL automatically share the created folder with the Service Account for access
+5. THE Personal_Diary_System SHALL display the newly created category in the user's category list immediately
 
 ### Requirement 2
 
-**User Story:** As an Admin_User, I want to view all my diary entries in a visual gallery, so that I can browse my memories easily.
+**User Story:** As a diary user, I want to upload photos directly to my Google Drive categories from the diary interface, so that I can add new memories without leaving the application.
 
 #### Acceptance Criteria
 
-1. WHEN an authenticated Admin_User visits the main page, THE Digital_Diary_System SHALL display all entries in a responsive grid layout
-2. THE Gallery_Grid SHALL show a preview of each media file with truncated description text
-3. THE Gallery_Grid SHALL display entries sorted by creation date with newest first
-4. WHEN viewed on mobile devices, THE Gallery_Grid SHALL adapt to a single-column layout
-5. WHEN viewed on desktop, THE Gallery_Grid SHALL display multiple columns based on screen width
+1. THE Personal_Diary_System SHALL provide an "Upload Photos" button for each category
+2. WHEN a user clicks "Upload Photos", THE Personal_Diary_System SHALL open a file selection dialog for images and videos
+3. WHEN files are selected, THE Personal_Diary_System SHALL upload them directly to the corresponding Google Drive folder
+4. THE Personal_Diary_System SHALL show upload progress and completion status for each file
+5. THE Personal_Diary_System SHALL automatically refresh the photo gallery to show newly uploaded images
 
 ### Requirement 3
 
-**User Story:** As an Admin_User, I want to view full details of any diary entry, so that I can read my complete reflections and see media in full size.
+**User Story:** As a diary user, I want to view my photos stored in Google Drive through a beautiful gallery interface on my main dashboard, so that I can browse and enjoy my memories organized by categories.
 
 #### Acceptance Criteria
 
-1. WHEN an Admin_User clicks on any entry in the Gallery_Grid, THE Digital_Diary_System SHALL open the Entry_Modal
-2. THE Entry_Modal SHALL display the full-size media file (image or video)
-3. THE Entry_Modal SHALL show the complete description text and creation timestamp
-4. WHEN the media is a video, THE Entry_Modal SHALL provide playback controls
-5. WHEN an Admin_User clicks outside the modal or presses escape, THE Digital_Diary_System SHALL close the Entry_Modal
+1. THE Personal_Diary_System SHALL display all photo categories as cards on the main dashboard
+2. WHEN a user clicks on a category card, THE Photo_Gallery SHALL display all images from that Google Drive folder
+3. THE Photo_Gallery SHALL load images directly from Google Drive URLs for real-time viewing
+4. THE Photo_Gallery SHALL show image thumbnails in a responsive grid layout
+5. THE Photo_Gallery SHALL support clicking on images to view them in full size
 
 ### Requirement 4
 
-**User Story:** As an Admin_User, I want to create new diary entries with media and descriptions, so that I can document my experiences and thoughts.
+**User Story:** As a diary user, I want to manage my photo categories from the main dashboard, so that I can organize, rename, or remove categories as my photo collection grows.
 
 #### Acceptance Criteria
 
-1. WHEN an Admin_User clicks the "Add Entry" button, THE Digital_Diary_System SHALL display the Upload_Form
-2. THE Upload_Form SHALL accept image files (JPEG, PNG, WebP) and video files (MP4, WebM)
-3. THE Upload_Form SHALL require a description field and allow an optional title field
-4. WHEN an Admin_User submits a valid entry, THE Digital_Diary_System SHALL upload the media to cloud storage
-5. WHEN the upload completes successfully, THE Digital_Diary_System SHALL create a new entry record and refresh the gallery
+1. THE Personal_Diary_System SHALL display all photo categories as cards on the main dashboard
+2. WHEN displaying category cards, THE Personal_Diary_System SHALL show category name, photo count, and last updated date
+3. THE Personal_Diary_System SHALL provide options to rename or delete categories from the dashboard
+4. WHEN a category is deleted, THE Personal_Diary_System SHALL remove the corresponding Google Drive folder
+5. THE Personal_Diary_System SHALL provide a refresh button to sync category information with Google Drive
 
 ### Requirement 5
 
-**User Story:** As an Admin_User, I want my diary to work seamlessly across devices, so that I can access it from desktop and mobile.
+**User Story:** As a diary user, I want to securely access my personal diary using Supabase authentication, so that my photos and categories are protected and only accessible to me.
 
 #### Acceptance Criteria
 
-1. THE Digital_Diary_System SHALL provide a responsive design that works on desktop and mobile browsers
-2. THE Digital_Diary_System SHALL use HTTPS for all communications to ensure security
-3. WHEN accessed on mobile devices, THE Digital_Diary_System SHALL provide touch-friendly interface elements
-4. THE Digital_Diary_System SHALL load and display media efficiently across different connection speeds
-5. THE Digital_Diary_System SHALL maintain consistent functionality across modern web browsers
+1. THE Personal_Diary_System SHALL use Supabase authentication for user login and session management
+2. WHEN a user is not authenticated, THE Personal_Diary_System SHALL redirect them to the login page
+3. THE Personal_Diary_System SHALL maintain user sessions using Supabase session tokens
+4. THE Personal_Diary_System SHALL associate all photo categories and Google Drive folders with the authenticated user
+5. THE Personal_Diary_System SHALL provide a logout function that clears the user session and redirects to login
 
 ### Requirement 6
 
-**User Story:** As an Admin_User, I want my diary data to be reliably stored and accessible, so that my memories are preserved long-term.
+**User Story:** As a diary user, I want to view individual photos in full screen with navigation controls, so that I can enjoy my memories in detail and browse through them easily.
 
 #### Acceptance Criteria
 
-1. THE Digital_Diary_System SHALL store all entry metadata in a PostgreSQL database
-2. THE Digital_Diary_System SHALL store all media files in Supabase cloud storage
-3. WHEN a media file is uploaded, THE Digital_Diary_System SHALL generate and store a public URL for access
-4. THE Digital_Diary_System SHALL maintain data integrity through proper database constraints
-5. THE Digital_Diary_System SHALL handle storage errors gracefully and provide user feedback
+1. WHEN a user clicks on a photo thumbnail, THE Photo_Gallery SHALL open the image in full screen mode
+2. THE Photo_Gallery SHALL provide navigation arrows to move between photos in the same category
+3. THE Photo_Gallery SHALL display photo metadata including filename and upload date
+4. THE Photo_Gallery SHALL provide a close button to return to the gallery grid view
+5. THE Photo_Gallery SHALL support keyboard navigation using arrow keys and escape key
 
 ### Requirement 7
 
-**User Story:** As an Admin_User, I want to deploy my diary to a custom domain, so that I can access it from anywhere with a memorable URL.
+**User Story:** As a diary user, I want the system to automatically connect to Google Drive using Service Account authentication, so that I can access my photos without complex OAuth setup.
 
 #### Acceptance Criteria
 
-1. THE Digital_Diary_System SHALL be deployable on Vercel platform
-2. THE Digital_Diary_System SHALL support custom domain configuration
-3. THE Digital_Diary_System SHALL use environment variables for all sensitive configuration
-4. THE Digital_Diary_System SHALL automatically provision SSL certificates for HTTPS access
-5. THE Digital_Diary_System SHALL provide reliable uptime and performance for personal use
+1. THE Personal_Diary_System SHALL authenticate with Google Drive API using Service Account credentials stored in environment variables
+2. THE Personal_Diary_System SHALL validate the Google Drive connection when the user accesses photo features
+3. IF the Google Drive connection fails, THEN THE Personal_Diary_System SHALL display a clear error message with troubleshooting guidance
+4. THE Personal_Diary_System SHALL automatically retry failed Google Drive operations with exponential backoff
+5. THE Personal_Diary_System SHALL log all Google Drive API interactions for debugging while showing user-friendly messages
+
+### Requirement 8
+
+**User Story:** As a diary user, I want the system to handle errors gracefully when accessing Google Drive, so that temporary connectivity issues don't break my diary experience.
+
+#### Acceptance Criteria
+
+1. IF Google Drive API requests fail, THEN THE Personal_Diary_System SHALL display user-friendly error messages
+2. THE Personal_Diary_System SHALL implement retry logic for transient Google Drive API failures
+3. WHEN Google Drive folders become inaccessible, THE Personal_Diary_System SHALL maintain existing category information
+4. THE Personal_Diary_System SHALL provide clear feedback about folder access permissions and sharing requirements
+5. THE Personal_Diary_System SHALL continue to function for other features when Google Drive is temporarily unavailable

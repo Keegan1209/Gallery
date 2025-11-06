@@ -31,6 +31,8 @@ model Category {
   google_folder_id  String   @unique  // Google Drive folder ID
   is_active         Boolean  @default(true)  // Whether to display this folder
   folder_path       String?  // Full path in Google Drive
+  cover_image       String?  // Cover image URL or base64 data
+  sort_order        Int      @default(0)  // Order for display
   created_at        DateTime @default(now())
   updated_at        DateTime @updatedAt
   last_synced       DateTime?
@@ -59,4 +61,28 @@ model Entry {
   category        Category @relation(fields: [category_id], references: [id], onDelete: Cascade)
 
   @@map("entries")
+}
+
+model FolderDiary {
+  id         String   @id @default(uuid())
+  folderId   String   @unique  // Google Drive folder ID
+  content    String   @default("")  // Diary entry content
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@map("folder_diaries")
+}
+
+model FolderCover {
+  id         String   @id @default(uuid())
+  folderId   String   @unique  // Google Drive folder ID
+  fileName   String   // Original filename
+  fileSize   Int      // File size in bytes
+  mimeType   String   // Image MIME type
+  storageUrl String   // Supabase storage URL
+  publicUrl  String   // Public accessible URL
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@map("folder_covers")
 }
