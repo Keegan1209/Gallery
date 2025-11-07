@@ -1,15 +1,22 @@
-import { createPool } from '@vercel/postgres'
+import postgres from 'postgres'
 
 /**
- * Database client using @vercel/postgres
- * Works seamlessly with Vercel deployments and Supabase Postgres
+ * Database client using postgres.js
+ * Works perfectly with Vercel and Supabase
+ * Recommended by Vercel for external Postgres databases
  */
 
-const pool = createPool({
-  connectionString: process.env.DATABASE_URL
-})
+const connectionString = process.env.POSTGRES_URL || process.env.DATABASE_URL
 
-export const sql = pool.sql
+if (!connectionString) {
+  throw new Error('Database connection string not found')
+}
+
+export const sql = postgres(connectionString, {
+  max: 10, // Maximum number of connections
+  idle_timeout: 20,
+  connect_timeout: 10,
+})
 
 // Helper function to get all active folders
 export async function getActiveFolders() {
@@ -18,7 +25,7 @@ export async function getActiveFolders() {
     WHERE is_active = true 
     ORDER BY created_at DESC
   `
-  return result.rows
+  return result // postgres.js returns array directly, not result.rows
 }
 
 // Helper function to find folder by Google Drive ID
@@ -28,7 +35,7 @@ export async function findFolderByGoogleId(googleFolderId: string) {
     WHERE google_folder_id = ${googleFolderId}
     LIMIT 1
   `
-  return result.rows[0] || null
+  return result[0] || null // postgres.js returns array directly
 }
 
 // Helper function to create a folder
@@ -54,7 +61,7 @@ export async function createFolder(data: {
     )
     RETURNING *
   `
-  return result.rows[0]
+  return result[0] // postgres.js returns array directly
 }
 
 // Helper function to update a folder
@@ -71,7 +78,7 @@ export async function updateFolder(googleFolderId: string, data: {
       WHERE google_folder_id = ${googleFolderId}
       RETURNING *
     `
-    return result.rows[0]
+    return result[0]
   } else if (data.name !== undefined && data.description !== undefined) {
     const result = await sql`
       UPDATE categories 
@@ -79,7 +86,7 @@ export async function updateFolder(googleFolderId: string, data: {
       WHERE google_folder_id = ${googleFolderId}
       RETURNING *
     `
-    return result.rows[0]
+    return result[0]
   } else if (data.name !== undefined && data.cover_image !== undefined) {
     const result = await sql`
       UPDATE categories 
@@ -87,7 +94,7 @@ export async function updateFolder(googleFolderId: string, data: {
       WHERE google_folder_id = ${googleFolderId}
       RETURNING *
     `
-    return result.rows[0]
+    return result[0]
   } else if (data.description !== undefined && data.cover_image !== undefined) {
     const result = await sql`
       UPDATE categories 
@@ -95,7 +102,7 @@ export async function updateFolder(googleFolderId: string, data: {
       WHERE google_folder_id = ${googleFolderId}
       RETURNING *
     `
-    return result.rows[0]
+    return result[0]
   } else if (data.name !== undefined) {
     const result = await sql`
       UPDATE categories 
@@ -103,7 +110,7 @@ export async function updateFolder(googleFolderId: string, data: {
       WHERE google_folder_id = ${googleFolderId}
       RETURNING *
     `
-    return result.rows[0]
+    return result[0]
   } else if (data.description !== undefined) {
     const result = await sql`
       UPDATE categories 
@@ -111,7 +118,7 @@ export async function updateFolder(googleFolderId: string, data: {
       WHERE google_folder_id = ${googleFolderId}
       RETURNING *
     `
-    return result.rows[0]
+    return result[0]
   } else if (data.cover_image !== undefined) {
     const result = await sql`
       UPDATE categories 
@@ -119,7 +126,7 @@ export async function updateFolder(googleFolderId: string, data: {
       WHERE google_folder_id = ${googleFolderId}
       RETURNING *
     `
-    return result.rows[0]
+    return result[0]
   }
   
   return null
@@ -132,27 +139,27 @@ export async function deleteFolder(googleFolderId: string) {
     WHERE google_folder_id = ${googleFolderId}
     RETURNING *
   `
-  return result.rows[0]
+  return result[0]
 }
 
 // Helper function to get folder diary
 export async function getFolderDiary(folderId: string) {
   const result = await sql`
     SELECT * FROM folder_diaries 
-    WHERE folderId = ${folderId}
+    WHERE "folderId" = ${folderId}
     LIMIT 1
   `
-  return result.rows[0] || null
+  return result[0] || null
 }
 
 // Helper function to upsert folder diary
 export async function upsertFolderDiary(folderId: string, content: string) {
   const result = await sql`
-    INSERT INTO folder_diaries (id, folderId, content, createdAt, updatedAt)
+    INSERT INTO folder_diaries (id, "folderId", content, "createdAt", "updatedAt")
     VALUES (gen_random_uuid(), ${folderId}, ${content}, NOW(), NOW())
-    ON CONFLICT (folderId) 
-    DO UPDATE SET content = ${content}, updatedAt = NOW()
+    ON CONFLICT ("folderId") 
+    DO UPDATE SET content = ${content}, "updatedAt" = NOW()
     RETURNING *
   `
-  return result.rows[0]
+  return result[0]
 }

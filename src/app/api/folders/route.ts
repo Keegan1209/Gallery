@@ -32,13 +32,12 @@ export async function GET() {
       folder.id && index === self.findIndex(f => f.id === folder.id)
     )
 
-    // 4. Get folder details (skip file counts for faster loading)
+    // 4. Get folder details with file counts
     const foldersWithDetails = await Promise.all(
       uniqueFolders.map(async (folderInfo) => {
         try {
-          // Skip file counting for faster initial load
-          // File counts can be loaded on-demand when viewing a folder
-          const files: any[] = []
+          // Get files from Google Drive to count them
+          const files = await GoogleDriveService.listFilesInFolder(folderInfo.id)
 
           if (folderInfo.source === 'config') {
             const configData = folderInfo.data as any

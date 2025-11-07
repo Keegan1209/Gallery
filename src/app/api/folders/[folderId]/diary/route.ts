@@ -62,12 +62,7 @@ export async function POST(
 
       return NextResponse.json({
         success: true,
-        diaryEntry: {
-          id: diaryEntry.id,
-          folderId: diaryEntry.folderid,
-          content: diaryEntry.content,
-          updatedAt: diaryEntry.updatedat
-        }
+        diary: diaryEntry
       })
     } catch (dbError) {
       console.error('Database error:', dbError)
