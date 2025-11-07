@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { PrismaClient } from '@prisma/client'
-
-const prisma = new PrismaClient()
+import { findFolderByGoogleId, updateFolder, createFolder, sql } from '@/lib/db'
 
 export async function POST(
     request: NextRequest,
@@ -69,23 +67,17 @@ export async function POST(
 
             // Save to database
             try {
-                const updateData: any = {
-                    cover_image: dataUrl,
-                    updated_at: new Date()
+                const existingFolder = await findFolderByGoogleId(folderId)
+                
+                if (existingFolder) {
+                    await updateFolder(folderId, { cover_image: dataUrl })
+                } else {
+                    await createFolder({
+                        google_folder_id: folderId,
+                        name: 'Untitled Folder',
+                        cover_image: dataUrl
+                    })
                 }
-
-                const createData: any = {
-                    google_folder_id: folderId,
-                    name: 'Untitled Folder',
-                    cover_image: dataUrl,
-                    is_active: true
-                }
-
-                await prisma.category.upsert({
-                    where: { google_folder_id: folderId },
-                    update: updateData,
-                    create: createData
-                })
                 console.log(`💾 Cover image saved to database for folder: ${folderId}`)
             } catch (dbError) {
                 console.error('Database save error:', dbError)
@@ -138,14 +130,12 @@ export async function GET(
 
         try {
             // Try to get cover image from database
-            const category = await prisma.category.findFirst({
-                where: { google_folder_id: folderId }
-            })
+            const category = await findFolderByGoogleId(folderId)
 
-            if (category && (category as any).cover_image) {
+            if (category && category.cover_image) {
                 return NextResponse.json({
                     success: true,
-                    coverUrl: (category as any).cover_image,
+                    coverUrl: category.cover_image,
                     fileName: 'cover-image',
                     fileSize: 0
                 })
@@ -191,15 +181,7 @@ export async function DELETE(
 
         try {
             // Remove cover image from database
-            const updateData: any = {
-                cover_image: null,
-                updated_at: new Date()
-            }
-
-            await prisma.category.updateMany({
-                where: { google_folder_id: folderId },
-                data: updateData
-            })
+            await updateFolder(folderId, { cover_image: null })
 
             console.log(`🗑️ Cover image deleted for folder: ${folderId}`)
 

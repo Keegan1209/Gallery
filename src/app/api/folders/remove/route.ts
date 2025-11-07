@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
+import { findFolderByGoogleId, deleteFolder } from '@/lib/db'
 
 export async function DELETE(request: NextRequest) {
   try {
@@ -17,15 +17,11 @@ export async function DELETE(request: NextRequest) {
     
     try {
       // Find the folder in database
-      const folder = await prisma.category.findFirst({
-        where: { google_folder_id: folderId }
-      })
+      const folder = await findFolderByGoogleId(folderId)
       
       if (folder) {
         // Remove from database (this only removes it from your gallery, not from Google Drive)
-        await prisma.category.delete({
-          where: { id: folder.id }
-        })
+        await deleteFolder(folderId)
         
         console.log(`✅ Removed database folder from gallery: ${folder.name}`)
         

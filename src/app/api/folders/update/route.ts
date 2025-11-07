@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { PrismaClient } from '@prisma/client'
-
-const prisma = new PrismaClient()
+import { findFolderByGoogleId, updateFolder, createFolder } from '@/lib/db'
 
 export async function PUT(request: NextRequest) {
   try {
@@ -21,42 +19,27 @@ export async function PUT(request: NextRequest) {
     })
 
     try {
-      // Try to update existing category in database
-      const updateData: any = {
-        ...(displayName && { name: displayName }),
-        ...(description && { description: description }),
-        updated_at: new Date()
-      }
-      
-      if (coverImage !== undefined) {
-        updateData.cover_image = coverImage
-      }
-      
-      const result = await prisma.category.updateMany({
-        where: { google_folder_id: folderId },
-        data: updateData
-      })
+      // Check if folder exists
+      const existingFolder = await findFolderByGoogleId(folderId)
 
-      if (result.count === 0) {
-        // If no category exists in database, create one
-        // This handles config folders that aren't in the database yet
-        const createData: any = {
+      if (existingFolder) {
+        // Update existing folder
+        const updateData: any = {}
+        if (displayName) updateData.name = displayName
+        if (description !== undefined) updateData.description = description
+        if (coverImage !== undefined) updateData.cover_image = coverImage
+        
+        await updateFolder(folderId, updateData)
+        console.log(`✅ Updated existing category for folder: ${folderId}`)
+      } else {
+        // Create new folder if it doesn't exist
+        await createFolder({
           google_folder_id: folderId,
           name: displayName || 'Untitled Folder',
           description: description || null,
-          is_active: true
-        }
-        
-        if (coverImage) {
-          createData.cover_image = coverImage
-        }
-        
-        await prisma.category.create({
-          data: createData
+          cover_image: coverImage || null
         })
         console.log(`✅ Created new category for folder: ${folderId}`)
-      } else {
-        console.log(`✅ Updated existing category for folder: ${folderId}`)
       }
 
       return NextResponse.json({
@@ -65,12 +48,11 @@ export async function PUT(request: NextRequest) {
       })
     } catch (dbError) {
       console.error('Database error:', dbError)
-      // For now, return success even if database update fails
-      // This allows the feature to work without database setup
       return NextResponse.json({
-        success: true,
-        message: 'Folder updated (database not available)'
-      })
+        success: false,
+        error: 'Database error occurred',
+        message: dbError instanceof Error ? dbError.message : 'Unknown error'
+      }, { status: 500 })
     }
   } catch (error) {
     console.error('Error updating folder:', error)

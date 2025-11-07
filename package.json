@@ -5,14 +5,9 @@
   "main": "index.js",
   "scripts": {
     "dev": "next dev",
-    "build": "prisma generate && next build",
+    "build": "next build",
     "start": "next start",
-    "lint": "next lint",
-    "db:setup": "node scripts/deploy-setup.js",
-    "db:push": "prisma db push",
-    "db:generate": "prisma generate",
-    "postinstall": "prisma generate",
-    "vercel-build": "prisma generate && next build"
+    "lint": "next lint"
   },
   "repository": {
     "type": "git",
@@ -33,6 +28,7 @@
     "@types/node": "^24.9.1",
     "@types/react": "^19.2.2",
     "@types/react-dom": "^19.2.2",
+    "@vercel/postgres": "^0.10.0",
     "autoprefixer": "^10.4.21",
     "bcryptjs": "^3.0.2",
     "dotenv": "^17.2.3",

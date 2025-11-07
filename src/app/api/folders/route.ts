@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { GoogleDriveService } from '@/lib/google-drive'
-import { prisma } from '@/lib/prisma'
+import { getActiveFolders } from '@/lib/db'
 
 export async function GET() {
   try {
@@ -13,10 +13,7 @@ export async function GET() {
     // 2. Get folders from database (user-created)
     let dbFolders: any[] = []
     try {
-      dbFolders = await prisma.category.findMany({
-        where: { is_active: true },
-        orderBy: { created_at: 'desc' }
-      })
+      dbFolders = await getActiveFolders()
       console.log(`🗄️ Database folders found: ${dbFolders.length}`)
       console.log(`📋 Database folder IDs:`, dbFolders.map(f => f.google_folder_id))
     } catch (dbError) {
@@ -63,20 +60,10 @@ export async function GET() {
           } else {
             const dbData = folderInfo.data as any
             
-            // Get cover image using raw query since Prisma client has issues
-            let coverImage = null
-            try {
-              const coverResult = await prisma.$queryRaw`
-                SELECT cover_image FROM categories 
-                WHERE google_folder_id = ${folderInfo.id}
-              ` as any[]
-              
-              if (coverResult.length > 0 && coverResult[0].cover_image) {
-                coverImage = coverResult[0].cover_image
-                console.log(`🖼️ Found cover image for ${dbData.name}: ${coverImage.substring(0, 50)}...`)
-              }
-            } catch (error) {
-              console.log(`⚠️ Could not get cover image for ${dbData.name}:`, error)
+            // Get cover image from database data
+            let coverImage = dbData.cover_image || null
+            if (coverImage) {
+              console.log(`🖼️ Found cover image for ${dbData.name}: ${coverImage.substring(0, 50)}...`)
             }
 
             return {
