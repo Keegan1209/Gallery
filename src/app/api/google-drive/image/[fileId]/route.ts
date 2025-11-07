@@ -15,7 +15,7 @@ import { drive } from '@/lib/google-drive'
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ fileId: string }> }
-) {
+): Promise<NextResponse> {
   try {
     const { fileId } = await params
     const { searchParams } = new URL(request.url)
@@ -48,7 +48,7 @@ export async function GET(
         const contentType = metadata.data.mimeType || 'image/jpeg'
         const chunks: Buffer[] = []
         
-        return new Promise((resolve, reject) => {
+        return new Promise<NextResponse>((resolve, reject) => {
           thumbnailResponse.data.on('data', (chunk: Buffer) => {
             chunks.push(chunk)
           })
@@ -126,7 +126,7 @@ export async function GET(
     // Stream the image data and convert to buffer
     const chunks: Buffer[] = []
     
-    return new Promise((resolve, reject) => {
+    return new Promise<NextResponse>((resolve, reject) => {
       response.data.on('data', (chunk: Buffer) => {
         chunks.push(chunk)
       })
