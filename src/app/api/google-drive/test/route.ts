@@ -15,7 +15,7 @@ export async function GET() {
         success: true,
         message: `Successfully connected to Google Drive`,
         folderCount: result.folderCount,
-        folders: result.folders.slice(0, 5).map(folder => ({
+        folders: (result.folders || []).slice(0, 5).map(folder => ({
           id: folder.id,
           name: folder.name,
           createdTime: folder.createdTime

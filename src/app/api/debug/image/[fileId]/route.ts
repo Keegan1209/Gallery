@@ -5,8 +5,9 @@ export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ fileId: string }> }
 ) {
+  const { fileId } = await params
+  
   try {
-    const { fileId } = await params
     
     if (!fileId) {
       return NextResponse.json({ error: 'File ID required' }, { status: 400 })

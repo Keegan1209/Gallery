@@ -9,7 +9,7 @@ export async function GET() {
     
     // Get folder details with file counts
     const foldersWithDetails = await Promise.all(
-      folders.map(async (folder) => {
+      folders.map(async (folder: any) => {
         try {
           const files = await GoogleDriveService.listFilesInFolder(folder.id!)
           return {
