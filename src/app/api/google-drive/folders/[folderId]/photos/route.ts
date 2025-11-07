@@ -50,13 +50,18 @@ export async function GET(
     
     console.log(`✅ Found ${photos.length} photos/videos in folder`)
     
-    return NextResponse.json({
+    const response = NextResponse.json({
       success: true,
       photos,
       totalCount: photos.length,
       imageCount: photos.filter(p => p.isImage).length,
       videoCount: photos.filter(p => p.isVideo).length
     })
+    
+    // Add cache headers - cache for 10 minutes (photos don't change often)
+    response.headers.set('Cache-Control', 'public, s-maxage=600, stale-while-revalidate=1200')
+    
+    return response
   } catch (error) {
     console.error('❌ Error fetching photos:', error)
     return NextResponse.json(

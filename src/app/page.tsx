@@ -77,13 +77,13 @@ export default function Dashboard() {
   }
 
   /**
-   * Load all folders from both config and database
-   * Combines manually configured folders with user-added folders
+   * Load all folders from database
+   * Only shows folders you've manually added via "Add Folder"
    */
   const loadFolders = async () => {
     setLoadingFolders(true)
     try {
-      // Fetch folders from API (combines config + database folders)
+      // Fetch folders from API (only your database folders)
       const response = await fetch('/api/folders')
       const data = await response.json()
 

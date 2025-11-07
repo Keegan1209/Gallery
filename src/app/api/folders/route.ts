@@ -35,11 +35,13 @@ export async function GET() {
       folder.id && index === self.findIndex(f => f.id === folder.id)
     )
 
-    // 4. Get folder details with file counts
+    // 4. Get folder details (skip file counts for faster loading)
     const foldersWithDetails = await Promise.all(
       uniqueFolders.map(async (folderInfo) => {
         try {
-          const files = await GoogleDriveService.listFilesInFolder(folderInfo.id)
+          // Skip file counting for faster initial load
+          // File counts can be loaded on-demand when viewing a folder
+          const files: any[] = []
 
           if (folderInfo.source === 'config') {
             const configData = folderInfo.data as any
@@ -101,10 +103,15 @@ export async function GET() {
 
     console.log(`✅ Found ${validFolders.length} total folders`)
 
-    return NextResponse.json({
+    const response = NextResponse.json({
       success: true,
       folders: validFolders
     })
+    
+    // Add cache headers - cache for 5 minutes
+    response.headers.set('Cache-Control', 'public, s-maxage=300, stale-while-revalidate=600')
+    
+    return response
   } catch (error) {
     console.error('❌ Error fetching folders:', error)
     return NextResponse.json(
