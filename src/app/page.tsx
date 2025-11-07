@@ -9,6 +9,7 @@ interface Folder {
   name: string
   description?: string
   createdTime: string
+  entryDate?: string | null
   fileCount: number
   hasImages: boolean
   hasVideos: boolean
@@ -48,6 +49,7 @@ export default function Dashboard() {
   const [editDisplayName, setEditDisplayName] = useState('')
   const [editCoverImage, setEditCoverImage] = useState('')
   const [editDescription, setEditDescription] = useState('')
+  const [editEntryDate, setEditEntryDate] = useState('')
   const [updating, setUpdating] = useState(false)
   const [uploadingCover, setUploadingCover] = useState(false)
   const [coverFile, setCoverFile] = useState<File | null>(null)
@@ -188,7 +190,8 @@ export default function Dashboard() {
           folderId: editingFolder.id,
           displayName: editDisplayName.trim() || undefined,
           coverImage: editCoverImage.trim() || undefined,
-          description: editDescription.trim() || undefined
+          description: editDescription.trim() || undefined,
+          entryDate: editEntryDate || undefined
         }),
       })
 
@@ -326,7 +329,8 @@ export default function Dashboard() {
           folderId: editingFolder.id,
           displayName: editDisplayName.trim() || undefined,
           coverImage: coverUrl,
-          description: editDescription.trim() || undefined
+          description: editDescription.trim() || undefined,
+          entryDate: editEntryDate || undefined
         }),
       })
 
@@ -610,6 +614,7 @@ export default function Dashboard() {
                       setEditingFolder(folder)
                       setEditDisplayName(folder.name)
                       setEditDescription(folder.description || '')
+                      setEditEntryDate(folder.entryDate || '')
 
                       // Load existing cover image
                       try {
@@ -688,19 +693,21 @@ export default function Dashboard() {
                 ========================================
                 */}
                   <div>
-                    {/* Date */}
-                    <div style={{
-                      fontSize: '11px', // EDIT: Date font size
-                      color: '#666666', // EDIT: Date color
-                      marginBottom: '5px',
-                      letterSpacing: '0.5px'
-                    }}>
-                      {new Date(folder.createdTime).toLocaleDateString('en-GB', { // EDIT: Date format
-                        day: '2-digit',
-                        month: '2-digit',
-                        year: 'numeric'
-                      }).replace(/\//g, '.')} {/* EDIT: Date separator */}
-                    </div>
+                    {/* Entry Date - Only show if set */}
+                    {folder.entryDate && (
+                      <div style={{
+                        fontSize: '11px', // EDIT: Date font size
+                        color: '#666666', // EDIT: Date color
+                        marginBottom: '5px',
+                        letterSpacing: '0.5px'
+                      }}>
+                        {new Date(folder.entryDate).toLocaleDateString('en-GB', { // EDIT: Date format
+                          day: '2-digit',
+                          month: '2-digit',
+                          year: 'numeric'
+                        }).replace(/\//g, '.')} {/* EDIT: Date separator */}
+                      </div>
+                    )}
 
                     {/* Folder Name/Title */}
                     <h3 style={{
@@ -725,14 +732,7 @@ export default function Dashboard() {
                       {folder.description || `Collection of ${folder.fileCount} memories from your digital archive.`} {/* EDIT: Default description */}
                     </p>
 
-                    {/* File Count */}
-                    <div style={{
-                      fontSize: '11px', // EDIT: File count font size
-                      color: '#666666', // EDIT: File count color
-                      letterSpacing: '0.5px'
-                    }}>
-                      {folder.fileCount} {folder.fileCount === 1 ? 'FILE' : 'FILES'} {/* EDIT: File count text */}
-                    </div>
+
                   </div>
                 </div>
               ))}
@@ -1069,6 +1069,41 @@ export default function Dashboard() {
                       boxSizing: 'border-box'
                     }}
                   />
+                </div>
+
+                {/* ENTRY DATE INPUT (OPTIONAL) */}
+                <div style={{ marginBottom: '20px' }}>
+                  <label style={{
+                    display: 'block',
+                    fontSize: '12px',
+                    fontWeight: 'bold',
+                    color: '#000000',
+                    marginBottom: '8px',
+                    letterSpacing: '0.5px'
+                  }}>
+                    ENTRY DATE (OPTIONAL)
+                  </label>
+                  <input
+                    type="date"
+                    value={editEntryDate}
+                    onChange={(e) => setEditEntryDate(e.target.value)}
+                    style={{
+                      width: '100%',
+                      padding: '10px',
+                      border: '1px solid #cccccc',
+                      fontSize: '14px',
+                      fontFamily: 'Helvetica, Arial, sans-serif',
+                      boxSizing: 'border-box'
+                    }}
+                  />
+                  <div style={{
+                    fontSize: '11px',
+                    color: '#666666',
+                    marginTop: '5px',
+                    lineHeight: '1.4'
+                  }}>
+                    Leave empty to hide the date on the folder card
+                  </div>
                 </div>
 
                 {/* COVER IMAGE UPLOAD */}

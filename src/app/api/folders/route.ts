@@ -32,57 +32,45 @@ export async function GET() {
       folder.id && index === self.findIndex(f => f.id === folder.id)
     )
 
-    // 4. Get folder details with file counts
-    const foldersWithDetails = await Promise.all(
-      uniqueFolders.map(async (folderInfo) => {
-        try {
-          // Get files from Google Drive to count them
-          const files = await GoogleDriveService.listFilesInFolder(folderInfo.id)
+    // 4. Get folder details WITHOUT file counts for fast loading
+    // File counts will be loaded on-demand by the frontend
+    const foldersWithDetails = uniqueFolders.map((folderInfo) => {
+      try {
+        if (folderInfo.source === 'config') {
+          const configData = folderInfo.data as any
 
-          if (folderInfo.source === 'config') {
-            const configData = folderInfo.data as any
-
-            // Try to get cover image from database (will work after schema update)
-            let coverImage = configData.coverImage || null
-
-            return {
-              id: folderInfo.id,
-              name: configData.displayName || configData.name,
-              description: configData.description,
-              createdTime: configData.createdTime,
-              fileCount: files.length,
-              hasImages: files.some(file => file.mimeType?.startsWith('image/')),
-              hasVideos: files.some(file => file.mimeType?.startsWith('video/')),
-              coverImage: coverImage,
-              source: 'config'
-            }
-          } else {
-            const dbData = folderInfo.data as any
-            
-            // Get cover image from database data
-            let coverImage = dbData.cover_image || null
-            if (coverImage) {
-              console.log(`🖼️ Found cover image for ${dbData.name}: ${coverImage.substring(0, 50)}...`)
-            }
-
-            return {
-              id: folderInfo.id,
-              name: dbData.name,
-              description: dbData.description,
-              createdTime: dbData.created_at,
-              fileCount: files.length,
-              hasImages: files.some(file => file.mimeType?.startsWith('image/')),
-              hasVideos: files.some(file => file.mimeType?.startsWith('video/')),
-              coverImage: coverImage,
-              source: 'database'
-            }
+          return {
+            id: folderInfo.id,
+            name: configData.displayName || configData.name,
+            description: configData.description,
+            createdTime: configData.createdTime,
+            fileCount: 0, // Will be loaded separately
+            hasImages: false,
+            hasVideos: false,
+            coverImage: configData.coverImage || null,
+            source: 'config'
           }
-        } catch (error) {
-          console.warn(`Could not get files for folder ${folderInfo.id}:`, error)
-          return null
+        } else {
+          const dbData = folderInfo.data as any
+          
+          return {
+            id: folderInfo.id,
+            name: dbData.name,
+            description: dbData.description,
+            createdTime: dbData.created_at,
+            entryDate: dbData.entry_date || null,
+            fileCount: 0, // Will be loaded separately
+            hasImages: false,
+            hasVideos: false,
+            coverImage: dbData.cover_image || null,
+            source: 'database'
+          }
         }
-      })
-    )
+      } catch (error) {
+        console.warn(`Could not process folder ${folderInfo.id}:`, error)
+        return null
+      }
+    })
 
     // Filter out failed folders
     const validFolders = foldersWithDetails.filter(folder => folder !== null)

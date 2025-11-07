@@ -3,7 +3,7 @@ import { findFolderByGoogleId, updateFolder, createFolder } from '@/lib/db'
 
 export async function PUT(request: NextRequest) {
   try {
-    const { folderId, displayName, coverImage, description } = await request.json()
+    const { folderId, displayName, coverImage, description, entryDate } = await request.json()
     
     if (!folderId) {
       return NextResponse.json(
@@ -28,6 +28,7 @@ export async function PUT(request: NextRequest) {
         if (displayName) updateData.name = displayName
         if (description !== undefined) updateData.description = description
         if (coverImage !== undefined) updateData.cover_image = coverImage
+        if (entryDate !== undefined) updateData.entry_date = entryDate
         
         await updateFolder(folderId, updateData)
         console.log(`✅ Updated existing category for folder: ${folderId}`)

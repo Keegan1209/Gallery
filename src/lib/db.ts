@@ -69,67 +69,20 @@ export async function updateFolder(googleFolderId: string, data: {
   name?: string
   description?: string | null
   cover_image?: string | null
+  entry_date?: string | null
 }) {
-  // Build dynamic update based on provided fields
-  if (data.name !== undefined && data.description !== undefined && data.cover_image !== undefined) {
-    const result = await sql`
-      UPDATE categories 
-      SET name = ${data.name}, description = ${data.description}, cover_image = ${data.cover_image}, updated_at = NOW()
-      WHERE google_folder_id = ${googleFolderId}
-      RETURNING *
-    `
-    return result[0]
-  } else if (data.name !== undefined && data.description !== undefined) {
-    const result = await sql`
-      UPDATE categories 
-      SET name = ${data.name}, description = ${data.description}, updated_at = NOW()
-      WHERE google_folder_id = ${googleFolderId}
-      RETURNING *
-    `
-    return result[0]
-  } else if (data.name !== undefined && data.cover_image !== undefined) {
-    const result = await sql`
-      UPDATE categories 
-      SET name = ${data.name}, cover_image = ${data.cover_image}, updated_at = NOW()
-      WHERE google_folder_id = ${googleFolderId}
-      RETURNING *
-    `
-    return result[0]
-  } else if (data.description !== undefined && data.cover_image !== undefined) {
-    const result = await sql`
-      UPDATE categories 
-      SET description = ${data.description}, cover_image = ${data.cover_image}, updated_at = NOW()
-      WHERE google_folder_id = ${googleFolderId}
-      RETURNING *
-    `
-    return result[0]
-  } else if (data.name !== undefined) {
-    const result = await sql`
-      UPDATE categories 
-      SET name = ${data.name}, updated_at = NOW()
-      WHERE google_folder_id = ${googleFolderId}
-      RETURNING *
-    `
-    return result[0]
-  } else if (data.description !== undefined) {
-    const result = await sql`
-      UPDATE categories 
-      SET description = ${data.description}, updated_at = NOW()
-      WHERE google_folder_id = ${googleFolderId}
-      RETURNING *
-    `
-    return result[0]
-  } else if (data.cover_image !== undefined) {
-    const result = await sql`
-      UPDATE categories 
-      SET cover_image = ${data.cover_image}, updated_at = NOW()
-      WHERE google_folder_id = ${googleFolderId}
-      RETURNING *
-    `
-    return result[0]
-  }
-  
-  return null
+  const result = await sql`
+    UPDATE categories 
+    SET 
+      name = COALESCE(${data.name || null}, name),
+      description = COALESCE(${data.description !== undefined ? data.description : null}, description),
+      cover_image = COALESCE(${data.cover_image !== undefined ? data.cover_image : null}, cover_image),
+      entry_date = COALESCE(${data.entry_date !== undefined ? data.entry_date : null}, entry_date),
+      updated_at = NOW()
+    WHERE google_folder_id = ${googleFolderId}
+    RETURNING *
+  `
+  return result[0]
 }
 
 // Helper function to delete a folder
