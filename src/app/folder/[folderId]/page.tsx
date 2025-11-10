@@ -2,8 +2,9 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useRouter, useParams } from 'next/navigation'
-import { ArrowLeft, X, ChevronLeft, ChevronRight } from 'lucide-react'
+import { ArrowLeft, X, ChevronLeft, ChevronRight, ChevronDown } from 'lucide-react'
 import { performanceMonitor } from '@/lib/performance-monitor'
+import { getUserDisplayName } from '@/config/users'
 
 // TypeScript interface for photo data structure
 interface Photo {
@@ -117,9 +118,10 @@ export default function FolderPhotosPage() {
   const [selectedPhoto, setSelectedPhoto] = useState<number | null>(null)
   const [folderName, setFolderName] = useState<string>('')
   const [imageCache, setImageCache] = useState<Set<string>>(new Set())
-  const [diaryEntry, setDiaryEntry] = useState<string>('')
+  const [diaryEntries, setDiaryEntries] = useState<any[]>([])
+  const [newEntryContent, setNewEntryContent] = useState<string>('')
   const [isSaving, setIsSaving] = useState(false)
-  const [lastSaved, setLastSaved] = useState<Date | null>(null)
+  const [editingEntryId, setEditingEntryId] = useState<string | null>(null)
 
   useEffect(() => {
     if (folderId) {
@@ -162,14 +164,16 @@ export default function FolderPhotosPage() {
       const response = await fetch(`/api/folders/${folderId}/diary`)
       if (response.ok) {
         const data = await response.json()
-        setDiaryEntry(data.content || '')
+        setDiaryEntries(data.entries || [])
       }
     } catch (error) {
-      console.log('No existing diary entry found')
+      console.log('No existing diary entries found')
     }
   }
 
-  const saveDiaryEntry = async () => {
+  const saveNewEntry = async () => {
+    if (!newEntryContent.trim()) return
+    
     try {
       setIsSaving(true)
       const response = await fetch(`/api/folders/${folderId}/diary`, {
@@ -177,35 +181,74 @@ export default function FolderPhotosPage() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ content: diaryEntry }),
+        body: JSON.stringify({ content: newEntryContent }),
       })
 
       if (!response.ok) {
         throw new Error('Failed to save diary entry')
       }
 
-      setLastSaved(new Date())
+      const data = await response.json()
+      setDiaryEntries([...diaryEntries, data.entry])
+      setNewEntryContent('')
     } catch (error) {
       console.error('Error saving diary entry:', error)
+      alert('Failed to save entry')
     } finally {
       setIsSaving(false)
     }
   }
 
-  const handleDiaryChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setDiaryEntry(e.target.value)
+  const updateEntry = async (entryId: string, content: string) => {
+    try {
+      setIsSaving(true)
+      const response = await fetch(`/api/folders/${folderId}/diary`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ entryId, content }),
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to update diary entry')
+      }
+
+      const data = await response.json()
+      setDiaryEntries(diaryEntries.map(e => e.id === entryId ? data.entry : e))
+      setEditingEntryId(null)
+    } catch (error) {
+      console.error('Error updating diary entry:', error)
+      alert('Failed to update entry')
+    } finally {
+      setIsSaving(false)
+    }
   }
 
-  // Auto-save functionality with debounce
-  useEffect(() => {
-    const timeoutId = setTimeout(() => {
-      if (diaryEntry.trim() !== '') {
-        saveDiaryEntry()
-      }
-    }, 2000) // Auto-save after 2 seconds of no typing
+  const deleteEntry = async (entryId: string) => {
+    if (!confirm('Delete this entry?')) return
+    
+    try {
+      const response = await fetch(`/api/folders/${folderId}/diary`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ entryId }),
+      })
 
-    return () => clearTimeout(timeoutId)
-  }, [diaryEntry])
+      if (!response.ok) {
+        throw new Error('Failed to delete diary entry')
+      }
+
+      setDiaryEntries(diaryEntries.filter(e => e.id !== entryId))
+    } catch (error) {
+      console.error('Error deleting diary entry:', error)
+      alert('Failed to delete entry')
+    }
+  }
+
+
 
   const openLightbox = (index: number) => {
     setSelectedPhoto(index)
@@ -321,47 +364,131 @@ export default function FolderPhotosPage() {
             <div className="w-3/12 pr-6 py-6 flex flex-col justify-center">
               <h2 className="text-3xl font-bold text-gray-900 mb-2">{folderName}</h2>
               <p className="text-sm text-gray-500">{photos.length} photos</p>
-              <div className="mt-4">
-                <button
-                  onClick={saveDiaryEntry}
-                  disabled={isSaving}
-                  className="bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors"
-                >
-                  {isSaving ? 'Saving...' : 'Save Entry'}
-                </button>
-                {lastSaved && (
-                  <p className="text-xs text-gray-500 mt-2">
-                    Last saved: {lastSaved.toLocaleTimeString()}
-                  </p>
-                )}
-              </div>
             </div>
 
-            {/* Right Column - Diary Entry (70%) */}
+            {/* Right Column - Diary Entries (70%) */}
             <div className="w-9/12 pl-6 py-6">
               <div className="h-full flex flex-col">
-                <div className="flex justify-between items-center mb-2">
-                  <label htmlFor="diary-entry" className="block text-sm font-medium text-gray-700">
-                    Diary Entry
-                  </label>
-                  <span className="text-xs text-gray-500">
-                    {diaryEntry.length} characters
-                  </span>
-                </div>
-                <textarea
-                  id="diary-entry"
-                  value={diaryEntry}
-                  onChange={handleDiaryChange}
-                  placeholder="Write about this collection of memories... Share your thoughts, feelings, and stories about these photos."
-                  className="flex-1 resize-none border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 overflow-y-auto"
-                  style={{ minHeight: 'calc(40vh - 100px)' }}
-                />
-                {isSaving && (
-                  <div className="mt-2 text-xs text-indigo-600 flex items-center">
-                    <div className="animate-spin rounded-full h-3 w-3 border-b border-indigo-600 mr-2"></div>
-                    Auto-saving...
+                <h3 className="text-sm font-medium text-gray-700 mb-3">Diary Entries</h3>
+                
+                {/* Scrollable Entries List - Row-based Layout */}
+                <div className="flex-1 border border-gray-300 rounded-md mb-4 p-4 relative" style={{ maxHeight: 'calc(60vh - 80px)' }}>
+                  <div 
+                    className="h-full overflow-y-auto overflow-x-hidden pr-2" 
+                    style={{ 
+                      scrollbarWidth: 'none',
+                      msOverflowStyle: 'none'
+                    }}
+                  >
+                    <style jsx>{`
+                      div::-webkit-scrollbar {
+                        display: none;
+                      }
+                    `}</style>
+                  {diaryEntries.length === 0 ? (
+                    <p className="text-sm text-gray-400 italic py-4">No entries yet. Add your first memory below.</p>
+                  ) : (
+                    <>
+                      {diaryEntries.map((entry) => (
+                        <div key={entry.id} className="flex gap-6 mb-6">
+                          {/* Left Column - User Info (Fixed Width) */}
+                          <div className="w-32 flex-shrink-0 pr-6 border-r border-gray-300">
+                            <p className="font-medium text-gray-900 mb-1" style={{ fontSize: '11px' }}>
+                              {getUserDisplayName(entry.user_email)}
+                            </p>
+                            <p className="text-gray-400 mb-2" style={{ fontSize: '9px' }}>
+                              {new Date(entry.created_at).toLocaleDateString()}
+                            </p>
+                            <span
+                              onClick={() => setEditingEntryId(entry.id)}
+                              className="text-gray-500 hover:text-gray-700 cursor-pointer transition-colors"
+                              style={{ fontSize: '9px' }}
+                            >
+                              edit
+                            </span>
+                          </div>
+                          
+                          {/* Right Column - Entry Content (Flexible Width) */}
+                          <div className="flex-1" style={{ paddingLeft: '12px' }}>
+                            {editingEntryId === entry.id ? (
+                              <div>
+                                <textarea
+                                  defaultValue={entry.content}
+                                  className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-gray-400"
+                                  rows={4}
+                                  id={`edit-${entry.id}`}
+                                />
+                                <div className="mt-2 flex">
+                                  <span
+                                    onClick={() => {
+                                      const textarea = document.getElementById(`edit-${entry.id}`) as HTMLTextAreaElement
+                                      updateEntry(entry.id, textarea.value)
+                                    }}
+                                    className="text-gray-700 hover:text-gray-900 cursor-pointer transition-colors"
+                                    style={{ fontSize: '10px', marginRight: '16px' }}
+                                  >
+                                    save
+                                  </span>
+                                  <span
+                                    onClick={() => deleteEntry(entry.id)}
+                                    className="text-red-600 hover:text-red-800 cursor-pointer transition-colors"
+                                    style={{ fontSize: '10px', marginRight: '16px' }}
+                                  >
+                                    delete
+                                  </span>
+                                  <span
+                                    onClick={() => setEditingEntryId(null)}
+                                    className="text-gray-500 hover:text-gray-700 cursor-pointer transition-colors"
+                                    style={{ fontSize: '10px' }}
+                                  >
+                                    cancel
+                                  </span>
+                                </div>
+                              </div>
+                            ) : (
+                              <p className="text-sm text-gray-800 leading-relaxed whitespace-pre-wrap">{entry.content}</p>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                      
+                      {/* Scroll Indicator - Inside scrollable area */}
+                      <div className="sticky bottom-0 right-0 float-right pointer-events-none" style={{ marginTop: '-24px' }}>
+                        <ChevronDown className="text-gray-300" size={16} />
+                      </div>
+                    </>
+                  )}
                   </div>
-                )}
+                </div>
+
+                {/* New Entry Form */}
+                <div className="pt-4">
+                  <textarea
+                    value={newEntryContent}
+                    onChange={(e) => setNewEntryContent(e.target.value)}
+                    placeholder="Add a new memory or thought..."
+                    className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-gray-400 focus:border-gray-400 resize-none"
+                    rows={4}
+                  />
+                  <div className="mt-3">
+                    <button
+                      onClick={saveNewEntry}
+                      disabled={isSaving || !newEntryContent.trim()}
+                      style={{
+                        backgroundColor: 'transparent',
+                        color: isSaving || !newEntryContent.trim() ? '#000000' : '#000000',
+                        border: `1px solid ${isSaving || !newEntryContent.trim() ? '#000000' : '#000000'}`,
+                        padding: '8px 16px',
+                        fontSize: '12px',
+                        fontWeight: 'normal',
+                        cursor: isSaving || !newEntryContent.trim() ? 'not-allowed' : 'pointer',
+                        letterSpacing: '0.5px'
+                      }}
+                    >
+                      {isSaving ? 'ADDING...' : 'ADD ENTRY'}
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
           </div>

@@ -95,23 +95,42 @@ export async function deleteFolder(googleFolderId: string) {
   return result[0]
 }
 
-// Helper function to get folder diary
-export async function getFolderDiary(folderId: string) {
+// Helper function to get all diary entries for a folder
+export async function getFolderDiaryEntries(folderId: string) {
   const result = await sql`
-    SELECT * FROM folder_diaries 
-    WHERE "folderId" = ${folderId}
-    LIMIT 1
+    SELECT * FROM diary_entries 
+    WHERE folder_id = ${folderId}
+    ORDER BY created_at ASC
   `
-  return result[0] || null
+  return result
 }
 
-// Helper function to upsert folder diary
-export async function upsertFolderDiary(folderId: string, content: string) {
+// Helper function to create a new diary entry
+export async function createDiaryEntry(folderId: string, userEmail: string, content: string) {
   const result = await sql`
-    INSERT INTO folder_diaries (id, "folderId", content, "createdAt", "updatedAt")
-    VALUES (gen_random_uuid(), ${folderId}, ${content}, NOW(), NOW())
-    ON CONFLICT ("folderId") 
-    DO UPDATE SET content = ${content}, "updatedAt" = NOW()
+    INSERT INTO diary_entries (id, folder_id, user_email, content, created_at, updated_at)
+    VALUES (gen_random_uuid(), ${folderId}, ${userEmail}, ${content}, NOW(), NOW())
+    RETURNING *
+  `
+  return result[0]
+}
+
+// Helper function to update a diary entry
+export async function updateDiaryEntry(entryId: string, content: string) {
+  const result = await sql`
+    UPDATE diary_entries 
+    SET content = ${content}, updated_at = NOW()
+    WHERE id = ${entryId}
+    RETURNING *
+  `
+  return result[0]
+}
+
+// Helper function to delete a diary entry
+export async function deleteDiaryEntry(entryId: string) {
+  const result = await sql`
+    DELETE FROM diary_entries 
+    WHERE id = ${entryId}
     RETURNING *
   `
   return result[0]

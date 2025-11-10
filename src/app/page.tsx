@@ -448,20 +448,20 @@ export default function Dashboard() {
             gap: '30px' // EDIT: Gap between navigation items
           }}>
           {/* Navigation Menu - EDIT: Add/remove navigation items here */}
-          <div
+          {/* <div
             className="nav-menu"
             style={{
               display: 'flex',
-              gap: '25px', // EDIT: Gap between nav items
-              fontSize: '12px', // EDIT: Navigation font size
+              gap: '25px', 
+              fontSize: '12px', 
               fontWeight: 'normal',
-              color: '#666666' // EDIT: Navigation text color
+              color: '#666666' 
             }}>
-            <span style={{ cursor: 'pointer' }}>COLLECTIONS</span> {/* EDIT: Nav item 1 */}
-            <span style={{ cursor: 'pointer' }}>MEMORIES</span> {/* EDIT: Nav item 2 */}
-            <span style={{ cursor: 'pointer' }}>ARCHIVE</span> {/* EDIT: Nav item 3 */}
-            <span style={{ cursor: 'pointer' }}>ABOUT</span> {/* EDIT: Nav item 4 */}
-          </div>
+            <span style={{ cursor: 'pointer' }}>COLLECTIONS</span> 
+            <span style={{ cursor: 'pointer' }}>MEMORIES</span> 
+            <span style={{ cursor: 'pointer' }}>ARCHIVE</span> 
+            <span style={{ cursor: 'pointer' }}>ABOUT</span> 
+          </div> */}
 
           {/* Add Folder Button */}
           <button
@@ -790,7 +790,7 @@ export default function Dashboard() {
             margin: 0,
             textAlign: 'justify' // EDIT: Text alignment
           }}>
-            Research platform devoted to critical thinking and digital imagination, initiated and coordinated by Memory Preservation Institute and Digital Storytelling Lab at École Supérieure d'Art et Design - Grenoble - Valencia. {/* EDIT: Left column text */}
+            Dear Lilly. this space serves as a catalogue of all our travels so far. View the photos weve taken and add a note or memory about the trip. This is only the start of many more! This site is also a WIP and I'm looking forward to doing many more updates in the future!  {/* EDIT: Left column text */}
           </p>
         </div>
 
@@ -803,10 +803,9 @@ export default function Dashboard() {
             margin: 0,
             textAlign: 'justify'
           }}>
-            École Supérieure d'Art et Design - Grenoble<br />
-            25 rue Lesdiguières - 38000 Grenoble - FRANCE<br />
-            E: personaldigitaldiary@gmail.com<br />
-            T: +33 (0) 4 76 86 61 30 {/* EDIT: Right column contact info */}
+            <br />
+            
+             {/* EDIT: Right column contact info */}
           </p>
         </div>
       </div>

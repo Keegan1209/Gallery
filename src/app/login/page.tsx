@@ -39,65 +39,131 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8">
-        <div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-            Personal Digital Diary
-          </h2>
-          <p className="mt-2 text-center text-sm text-gray-600">
-            Sign in to access your private diary
-          </p>
+    <div style={{
+      minHeight: '100vh',
+      backgroundColor: '#ffffff',
+      fontFamily: 'Helvetica, Arial, sans-serif',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      padding: '20px'
+    }}>
+      <div style={{
+        width: '100%',
+        maxWidth: '400px'
+      }}>
+        {/* Title */}
+        <div style={{
+          textAlign: 'center',
+          marginBottom: '60px'
+        }}>
+          <h1 style={{
+            fontSize: '18px',
+            fontWeight: 'normal',
+            color: '#000000',
+            margin: '0 0 10px 0',
+            letterSpacing: '0.5px'
+          }}>
+            LILLY & KEEGAN
+          </h1>
+          <div style={{
+            fontSize: '18px',
+            fontWeight: 'normal',
+            color: '#000000',
+            letterSpacing: '0.5px'
+          }}>
+            VISUAL DIARY
+          </div>
         </div>
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          <div className="space-y-4">
-            <div>
-              <label htmlFor="email" className="sr-only">
-                Email address
-              </label>
-              <input
-                id="email"
-                name="email"
-                type="email"
-                autoComplete="email"
-                required
-                className="appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
-                placeholder="Email address"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-              />
-            </div>
-            <div>
-              <label htmlFor="password" className="sr-only">
-                Password
-              </label>
-              <input
-                id="password"
-                name="password"
-                type="password"
-                autoComplete="current-password"
-                required
-                className="appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
-                placeholder="Password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-              />
-            </div>
+
+        {/* Login Form */}
+        <form onSubmit={handleSubmit}>
+          {/* Email Input */}
+          <div style={{ marginBottom: '20px' }}>
+            <input
+              id="email"
+              name="email"
+              type="email"
+              autoComplete="email"
+              required
+              placeholder="EMAIL"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              style={{
+                width: '100%',
+                padding: '12px 16px',
+                fontSize: '12px',
+                fontFamily: 'Helvetica, Arial, sans-serif',
+                color: '#000000',
+                backgroundColor: '#ffffff',
+                border: '1px solid #000000',
+                outline: 'none',
+                letterSpacing: '0.5px',
+                boxSizing: 'border-box'
+              }}
+            />
           </div>
 
+          {/* Password Input */}
+          <div style={{ marginBottom: '30px' }}>
+            <input
+              id="password"
+              name="password"
+              type="password"
+              autoComplete="current-password"
+              required
+              placeholder="PASSWORD"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              style={{
+                width: '100%',
+                padding: '12px 16px',
+                fontSize: '12px',
+                fontFamily: 'Helvetica, Arial, sans-serif',
+                color: '#000000',
+                backgroundColor: '#ffffff',
+                border: '1px solid #000000',
+                outline: 'none',
+                letterSpacing: '0.5px',
+                boxSizing: 'border-box'
+              }}
+            />
+          </div>
+
+          {/* Error Message */}
           {error && (
-            <div className="text-red-600 text-sm text-center">{error}</div>
+            <div style={{
+              fontSize: '12px',
+              color: '#cc0000',
+              textAlign: 'center',
+              marginBottom: '20px',
+              letterSpacing: '0.5px'
+            }}>
+              {error}
+            </div>
           )}
 
-          <div>
-            <button
-              type="submit"
-              disabled={loading}
-              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
-            >
-              {loading ? 'Signing in...' : 'Sign in'}
-            </button>
-          </div>
+          {/* Submit Button */}
+          <button
+            type="submit"
+            disabled={loading}
+            style={{
+              width: '100%',
+              padding: '12px 16px',
+              fontSize: '12px',
+              fontFamily: 'Helvetica, Arial, sans-serif',
+              fontWeight: 'normal',
+              color: '#ffffff',
+              backgroundColor: '#000000',
+              border: '1px solid #000000',
+              cursor: loading ? 'not-allowed' : 'pointer',
+              letterSpacing: '0.5px',
+              opacity: loading ? 0.6 : 1,
+              transition: 'opacity 0.2s ease'
+            }}
+          >
+            {loading ? 'SIGNING IN...' : 'SIGN IN'}
+          </button>
         </form>
       </div>
     </div>
