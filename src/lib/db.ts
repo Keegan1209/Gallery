@@ -25,6 +25,9 @@ export async function getActiveFolders() {
     WHERE is_active = true 
     ORDER BY created_at DESC
   `
+  console.log('🔍 getActiveFolders result:', result)
+  console.log('🔍 Result length:', result.length)
+  console.log('🔍 Result type:', typeof result, Array.isArray(result))
   return result // postgres.js returns array directly, not result.rows
 }
 
