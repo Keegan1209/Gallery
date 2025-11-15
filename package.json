@@ -33,6 +33,7 @@
     "bcryptjs": "^3.0.2",
     "dotenv": "^17.2.3",
     "googleapis": "^164.1.0",
+    "heic-convert": "^2.1.0",
     "jose": "^6.1.0",
     "jsonwebtoken": "^9.0.2",
     "lucide-react": "^0.548.0",
@@ -45,5 +46,8 @@
     "sharp": "^0.34.5",
     "tailwindcss": "^4.1.16",
     "typescript": "^5.9.3"
+  },
+  "devDependencies": {
+    "@types/heic-convert": "^2.1.0"
   }
 }

@@ -349,7 +349,7 @@ export default function FolderPhotosPage() {
                   className="photo-item"
                 >
                   <Image
-                    src={`${photo.thumbnailUrl}&w=400&q=70`}
+                    src={`${photo.thumbnailUrl}&w=800&q=90`}
                     alt={photo.name}
                     fill
                     sizes="(max-width: 600px) 50vw, (max-width: 900px) 33vw, (max-width: 1200px) 25vw, 20vw"
@@ -359,10 +359,8 @@ export default function FolderPhotosPage() {
                     }}
                     loading={index < 10 ? 'eager' : 'lazy'}
                     priority={index < 5}
-                    quality={70}
+                    quality={90}
                     unoptimized
-                    placeholder="blur"
-                    blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCwAA8A/9k="
                   />
                   {photo.isVideo && (
                     <div style={{
@@ -672,29 +670,22 @@ export default function FolderPhotosPage() {
           )}
 
           {/* Image */}
-          <div
+          <img
+            src={`${photos[selectedPhoto].fullUrl}?w=2400&q=95`}
+            alt={photos[selectedPhoto].name}
             onClick={(e) => e.stopPropagation()}
+            onError={(e) => {
+              console.error('Failed to load image:', photos[selectedPhoto].fullUrl)
+              // Fallback to original URL without params
+              e.currentTarget.src = photos[selectedPhoto].fullUrl
+            }}
             style={{
-              position: 'relative',
               maxWidth: '90%',
               maxHeight: '90%',
-              width: '100%',
-              height: '100%'
+              objectFit: 'contain',
+              display: 'block'
             }}
-          >
-            <Image
-              src={`${photos[selectedPhoto].fullUrl}&w=1920&q=85`}
-              alt={photos[selectedPhoto].name}
-              fill
-              sizes="90vw"
-              style={{
-                objectFit: 'contain'
-              }}
-              quality={85}
-              priority
-              unoptimized
-            />
-          </div>
+          />
         </div>
       )}
 
@@ -712,6 +703,7 @@ export default function FolderPhotosPage() {
         /* Photo loading animation */
         .photo-item {
           animation: fadeIn 0.3s ease-in;
+          background-color: #ffffff !important;
         }
         
         @keyframes fadeIn {
@@ -723,9 +715,15 @@ export default function FolderPhotosPage() {
           }
         }
 
-        /* Image loading skeleton */
+        /* Image loading skeleton - white background */
         .photo-item img {
           transition: opacity 0.3s ease-in-out;
+          background-color: #ffffff !important;
+        }
+        
+        /* Ensure Next.js Image wrapper has white background */
+        .photo-item > span {
+          background-color: #ffffff !important;
         }
 
         /* Responsive photo grid */

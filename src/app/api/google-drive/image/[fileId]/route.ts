@@ -1,22 +1,59 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { drive } from '@/lib/google-drive'
 import sharp from 'sharp'
+import heicConvert from 'heic-convert'
 
 /**
- * Image Proxy API Route with Compression
+ * Image Proxy API Route with Compression and HEIC Conversion
  * 
  * This API serves as a proxy for Google Drive images to solve CORS issues.
  * Google Drive images can't be loaded directly in <img> tags due to CORS restrictions,
- * so this endpoint fetches the image server-side, compresses it, and streams it to the client.
+ * so this endpoint fetches the image server-side, converts HEIC to JPEG, compresses it, 
+ * and streams it to the client.
  * 
  * Route: /api/google-drive/image/[fileId]
  * Method: GET
  * Query Params: 
  *   - size: 'thumbnail' or 'full'
  *   - w: width for resizing (optional)
- *   - q: quality 1-100 (optional, default 75)
+ *   - q: quality 1-100 (optional, default 90)
  * Returns: Compressed image binary data with proper headers
+ * 
+ * Supported formats: JPEG, PNG, WebP, HEIC/HEIF (auto-converted to JPEG)
  */
+
+/**
+ * Helper function to convert HEIC/HEIF to JPEG
+ */
+async function convertHeicToJpeg(buffer: Buffer): Promise<Buffer> {
+  try {
+    console.log('🔄 Converting HEIC to JPEG...')
+    const outputBuffer = await heicConvert({
+      buffer: buffer as any,
+      format: 'JPEG',
+      quality: 1 // Max quality for conversion, we'll compress later
+    })
+    console.log('✅ HEIC conversion successful')
+    return Buffer.from(outputBuffer)
+  } catch (error) {
+    console.error('❌ HEIC conversion failed:', error)
+    throw error
+  }
+}
+
+/**
+ * Helper function to detect if file is HEIC/HEIF
+ */
+function isHeicFormat(mimeType: string | null | undefined, fileName: string | null | undefined): boolean {
+  const heicMimeTypes = ['image/heic', 'image/heif', 'image/heic-sequence', 'image/heif-sequence']
+  const heicExtensions = ['.heic', '.heif']
+  
+  const isMimeHeic = mimeType ? heicMimeTypes.includes(mimeType.toLowerCase()) : false
+  const isExtensionHeic = fileName ? heicExtensions.some(ext => fileName.toLowerCase().endsWith(ext)) : false
+  
+  return isMimeHeic || isExtensionHeic
+}
+
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ fileId: string }> }
@@ -26,7 +63,7 @@ export async function GET(
     const { searchParams } = new URL(request.url)
     const size = searchParams.get('size') // 'thumbnail' or 'full'
     const width = searchParams.get('w') ? parseInt(searchParams.get('w')!) : null
-    const quality = searchParams.get('q') ? parseInt(searchParams.get('q')!) : 75
+    const quality = searchParams.get('q') ? parseInt(searchParams.get('q')!) : 90
     
     if (!fileId) {
       return NextResponse.json(
@@ -62,7 +99,19 @@ export async function GET(
           
           thumbnailResponse.data.on('end', async () => {
             try {
-              const buffer = Buffer.concat(chunks)
+              let buffer = Buffer.concat(chunks)
+              
+              // Get file metadata to check for HEIC
+              const fileMetadata = await drive.files.get({
+                fileId: fileId,
+                fields: 'mimeType, name'
+              })
+              
+              // Convert HEIC to JPEG if needed
+              if (isHeicFormat(fileMetadata.data.mimeType, fileMetadata.data.name)) {
+                console.log('🔄 Detected HEIC format in thumbnail, converting to JPEG...')
+                buffer = await convertHeicToJpeg(buffer) as any
+              }
               
               // Compress thumbnail with sharp
               let processedImage = sharp(buffer)
@@ -77,6 +126,8 @@ export async function GET(
               const compressedBuffer = await processedImage
                 .jpeg({ quality, mozjpeg: true })
                 .toBuffer()
+              
+              console.log(`✅ Thumbnail processed: ${compressedBuffer.length} bytes (quality: ${quality})`)
               
               resolve(new NextResponse(new Uint8Array(compressedBuffer), {
                 headers: {
@@ -115,21 +166,29 @@ export async function GET(
     console.log(`🖼️ Fetching ${size || 'full'} image for file: ${fileId}`)
     
     // First check if file exists and is accessible
+    let fileName: string | null | undefined
+    let fileMimeType: string | null | undefined
+    
     try {
       const metadata = await drive.files.get({
         fileId: fileId,
         fields: 'mimeType, name, size'
       })
       
+      fileName = metadata.data.name
+      fileMimeType = metadata.data.mimeType
+      
       console.log(`📄 File metadata:`, {
-        name: metadata.data.name,
-        mimeType: metadata.data.mimeType,
+        name: fileName,
+        mimeType: fileMimeType,
         size: metadata.data.size
       })
       
-      // Check if it's actually an image
-      if (!metadata.data.mimeType?.startsWith('image/')) {
-        console.log(`❌ File ${fileId} is not an image: ${metadata.data.mimeType}`)
+      // Check if it's actually an image (including HEIC)
+      const isImage = fileMimeType?.startsWith('image/') || isHeicFormat(fileMimeType, fileName)
+      
+      if (!isImage) {
+        console.log(`❌ File ${fileId} is not an image: ${fileMimeType}`)
         return NextResponse.json(
           { error: 'File is not an image' },
           { status: 400 }
@@ -168,7 +227,13 @@ export async function GET(
       
       response.data.on('end', async () => {
         try {
-          const buffer = Buffer.concat(chunks)
+          let buffer = Buffer.concat(chunks)
+          
+          // Convert HEIC to JPEG if needed
+          if (isHeicFormat(fileMimeType, fileName)) {
+            console.log('🔄 Detected HEIC format, converting to JPEG...')
+            buffer = await convertHeicToJpeg(buffer) as any
+          }
           
           // Compress image with sharp
           let processedImage = sharp(buffer)
@@ -187,6 +252,8 @@ export async function GET(
             .toBuffer()
           
           const cacheMaxAge = size === 'thumbnail' ? 2592000 : 31536000
+          
+          console.log(`✅ Image processed: ${compressedBuffer.length} bytes (quality: ${quality})`)
           
           resolve(new NextResponse(new Uint8Array(compressedBuffer), {
             headers: {
