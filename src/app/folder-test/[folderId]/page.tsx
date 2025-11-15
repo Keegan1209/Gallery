@@ -24,7 +24,7 @@ interface DiaryEntry {
   user_email: string
 }
 
-export default function FolderPhotosPage() {
+export default function FolderTestPage() {
   const router = useRouter()
   const params = useParams()
   const folderId = params.folderId as string
