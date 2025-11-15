@@ -1,12 +1,12 @@
 import { NextResponse } from 'next/server'
-import { getAllFolders } from '@/lib/db'
+import { getActiveFolders } from '@/lib/db'
 
 export async function GET() {
   try {
     console.log('🔍 Debug: Checking all folders in database...')
     
     // Get all categories from database
-    const allCategories = await getAllFolders()
+    const allCategories = await getActiveFolders()
     
     console.log(`📊 Found ${allCategories.length} categories in database`)
     
