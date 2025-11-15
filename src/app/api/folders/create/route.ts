@@ -27,10 +27,9 @@ export async function POST(request: NextRequest) {
     
     // 2. Store folder info in database
     const dbFolder = await createFolder({
+      google_folder_id: googleFolder.id,
       name: name,
-      description: description || `Photo collection: ${name}`,
-      googleFolderId: googleFolder.id,
-      folderPath: name
+      description: description || `Photo collection: ${name}`
     })
     
     console.log(`✅ Saved folder to database: ${dbFolder.id}`)
