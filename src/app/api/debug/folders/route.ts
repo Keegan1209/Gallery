@@ -1,14 +1,12 @@
 import { NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
+import { getAllFolders } from '@/lib/db'
 
 export async function GET() {
   try {
     console.log('🔍 Debug: Checking all folders in database...')
     
     // Get all categories from database
-    const allCategories = await prisma.category.findMany({
-      orderBy: { created_at: 'desc' }
-    })
+    const allCategories = await getAllFolders()
     
     console.log(`📊 Found ${allCategories.length} categories in database`)
     

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { GoogleDriveService } from '@/lib/google-drive'
-import { prisma } from '@/lib/prisma'
+import { createFolder } from '@/lib/db'
 
 export async function POST(request: NextRequest) {
   try {
@@ -26,14 +26,11 @@ export async function POST(request: NextRequest) {
     console.log(`✅ Created Google Drive folder: ${googleFolder.id}`)
     
     // 2. Store folder info in database
-    const dbFolder = await prisma.category.create({
-      data: {
-        name: name,
-        description: description || `Photo collection: ${name}`,
-        google_folder_id: googleFolder.id,
-        folder_path: name,
-        is_active: true
-      }
+    const dbFolder = await createFolder({
+      name: name,
+      description: description || `Photo collection: ${name}`,
+      googleFolderId: googleFolder.id,
+      folderPath: name
     })
     
     console.log(`✅ Saved folder to database: ${dbFolder.id}`)
