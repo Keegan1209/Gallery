@@ -82,8 +82,8 @@ export async function GET() {
       folders: validFolders
     })
     
-    // Add cache headers - cache for 5 minutes
-    response.headers.set('Cache-Control', 'public, s-maxage=300, stale-while-revalidate=600')
+    // No cache - always fetch fresh data
+    response.headers.set('Cache-Control', 'no-store, must-revalidate')
     
     return response
   } catch (error) {
