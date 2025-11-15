@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter, useParams } from 'next/navigation'
+import Image from 'next/image'
 import { X, ChevronLeft, ChevronRight } from 'lucide-react'
 import { getUserDisplayName } from '@/config/users'
 
@@ -342,13 +343,27 @@ export default function FolderPhotosPage() {
                     aspectRatio: '1/1',
                     backgroundColor: '#f5f5f5',
                     cursor: 'pointer',
-                    backgroundImage: `url(${photo.thumbnailUrl})`,
-                    backgroundSize: 'cover',
-                    backgroundPosition: 'center',
                     position: 'relative',
                     overflow: 'hidden'
                   }}
+                  className="photo-item"
                 >
+                  <Image
+                    src={`${photo.thumbnailUrl}&w=400&q=70`}
+                    alt={photo.name}
+                    fill
+                    sizes="(max-width: 600px) 50vw, (max-width: 900px) 33vw, (max-width: 1200px) 25vw, 20vw"
+                    style={{
+                      objectFit: 'cover',
+                      objectPosition: 'center'
+                    }}
+                    loading={index < 10 ? 'eager' : 'lazy'}
+                    priority={index < 5}
+                    quality={70}
+                    unoptimized
+                    placeholder="blur"
+                    blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCwAA8A/9k="
+                  />
                   {photo.isVideo && (
                     <div style={{
                       position: 'absolute',
@@ -359,7 +374,8 @@ export default function FolderPhotosPage() {
                       borderRadius: '50%',
                       padding: '10px',
                       color: '#ffffff',
-                      fontSize: '20px'
+                      fontSize: '20px',
+                      zIndex: 1
                     }}>
                       ▶️
                     </div>
@@ -656,16 +672,29 @@ export default function FolderPhotosPage() {
           )}
 
           {/* Image */}
-          <img
-            src={photos[selectedPhoto].fullUrl}
-            alt={photos[selectedPhoto].name}
+          <div
             onClick={(e) => e.stopPropagation()}
             style={{
+              position: 'relative',
               maxWidth: '90%',
               maxHeight: '90%',
-              objectFit: 'contain'
+              width: '100%',
+              height: '100%'
             }}
-          />
+          >
+            <Image
+              src={`${photos[selectedPhoto].fullUrl}&w=1920&q=85`}
+              alt={photos[selectedPhoto].name}
+              fill
+              sizes="90vw"
+              style={{
+                objectFit: 'contain'
+              }}
+              quality={85}
+              priority
+              unoptimized
+            />
+          </div>
         </div>
       )}
 
@@ -678,6 +707,25 @@ export default function FolderPhotosPage() {
         .diary-entries-scroll {
           -ms-overflow-style: none;
           scrollbar-width: none;
+        }
+
+        /* Photo loading animation */
+        .photo-item {
+          animation: fadeIn 0.3s ease-in;
+        }
+        
+        @keyframes fadeIn {
+          from {
+            opacity: 0;
+          }
+          to {
+            opacity: 1;
+          }
+        }
+
+        /* Image loading skeleton */
+        .photo-item img {
+          transition: opacity 0.3s ease-in-out;
         }
 
         /* Responsive photo grid */

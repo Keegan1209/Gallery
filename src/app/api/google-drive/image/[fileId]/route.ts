@@ -1,16 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { drive } from '@/lib/google-drive'
+import sharp from 'sharp'
 
 /**
- * Image Proxy API Route
+ * Image Proxy API Route with Compression
  * 
  * This API serves as a proxy for Google Drive images to solve CORS issues.
  * Google Drive images can't be loaded directly in <img> tags due to CORS restrictions,
- * so this endpoint fetches the image server-side and streams it to the client.
+ * so this endpoint fetches the image server-side, compresses it, and streams it to the client.
  * 
  * Route: /api/google-drive/image/[fileId]
  * Method: GET
- * Returns: Image binary data with proper headers
+ * Query Params: 
+ *   - size: 'thumbnail' or 'full'
+ *   - w: width for resizing (optional)
+ *   - q: quality 1-100 (optional, default 75)
+ * Returns: Compressed image binary data with proper headers
  */
 export async function GET(
   request: NextRequest,
@@ -20,6 +25,8 @@ export async function GET(
     const { fileId } = await params
     const { searchParams } = new URL(request.url)
     const size = searchParams.get('size') // 'thumbnail' or 'full'
+    const width = searchParams.get('w') ? parseInt(searchParams.get('w')!) : null
+    const quality = searchParams.get('q') ? parseInt(searchParams.get('q')!) : 75
     
     if (!fileId) {
       return NextResponse.json(
@@ -53,16 +60,44 @@ export async function GET(
             chunks.push(chunk)
           })
           
-          thumbnailResponse.data.on('end', () => {
-            const buffer = Buffer.concat(chunks)
-            
-            resolve(new NextResponse(buffer, {
-              headers: {
-                'Content-Type': contentType,
-                'Cache-Control': 'public, max-age=2592000', // Cache thumbnails for 30 days
-                'Access-Control-Allow-Origin': '*',
-              },
-            }))
+          thumbnailResponse.data.on('end', async () => {
+            try {
+              const buffer = Buffer.concat(chunks)
+              
+              // Compress thumbnail with sharp
+              let processedImage = sharp(buffer)
+              
+              if (width) {
+                processedImage = processedImage.resize(width, null, {
+                  fit: 'inside',
+                  withoutEnlargement: true
+                })
+              }
+              
+              const compressedBuffer = await processedImage
+                .jpeg({ quality, mozjpeg: true })
+                .toBuffer()
+              
+              resolve(new NextResponse(new Uint8Array(compressedBuffer), {
+                headers: {
+                  'Content-Type': 'image/jpeg',
+                  'Cache-Control': 'public, max-age=2592000, immutable', // Cache thumbnails for 30 days
+                  'Access-Control-Allow-Origin': '*',
+                  'Content-Length': compressedBuffer.length.toString(),
+                },
+              }))
+            } catch (compressionError) {
+              console.error('Error compressing thumbnail:', compressionError)
+              // Fallback to original buffer if compression fails
+              const buffer = Buffer.concat(chunks)
+              resolve(new NextResponse(buffer, {
+                headers: {
+                  'Content-Type': contentType,
+                  'Cache-Control': 'public, max-age=2592000',
+                  'Access-Control-Allow-Origin': '*',
+                },
+              }))
+            }
           })
           
           thumbnailResponse.data.on('error', (error: Error) => {
@@ -131,16 +166,50 @@ export async function GET(
         chunks.push(chunk)
       })
       
-      response.data.on('end', () => {
-        const buffer = Buffer.concat(chunks)
-        
-        resolve(new NextResponse(buffer, {
-          headers: {
-            'Content-Type': contentType,
-            'Cache-Control': size === 'thumbnail' ? 'public, max-age=2592000' : 'public, max-age=31536000', // Cache thumbnails for 30 days, full images for 1 year
-            'Access-Control-Allow-Origin': '*',
-          },
-        }))
+      response.data.on('end', async () => {
+        try {
+          const buffer = Buffer.concat(chunks)
+          
+          // Compress image with sharp
+          let processedImage = sharp(buffer)
+          
+          // Resize if width is specified
+          if (width) {
+            processedImage = processedImage.resize(width, null, {
+              fit: 'inside',
+              withoutEnlargement: true
+            })
+          }
+          
+          // Compress based on format
+          const compressedBuffer = await processedImage
+            .jpeg({ quality, mozjpeg: true })
+            .toBuffer()
+          
+          const cacheMaxAge = size === 'thumbnail' ? 2592000 : 31536000
+          
+          resolve(new NextResponse(new Uint8Array(compressedBuffer), {
+            headers: {
+              'Content-Type': 'image/jpeg',
+              'Cache-Control': `public, max-age=${cacheMaxAge}, immutable`,
+              'Access-Control-Allow-Origin': '*',
+              'Content-Length': compressedBuffer.length.toString(),
+              'Vary': 'Accept-Encoding',
+            },
+          }))
+        } catch (compressionError) {
+          console.error('Error compressing image:', compressionError)
+          // Fallback to original buffer if compression fails
+          const buffer = Buffer.concat(chunks)
+          const cacheMaxAge = size === 'thumbnail' ? 2592000 : 31536000
+          resolve(new NextResponse(buffer, {
+            headers: {
+              'Content-Type': contentType,
+              'Cache-Control': `public, max-age=${cacheMaxAge}`,
+              'Access-Control-Allow-Origin': '*',
+            },
+          }))
+        }
       })
       
       response.data.on('error', (error: Error) => {
